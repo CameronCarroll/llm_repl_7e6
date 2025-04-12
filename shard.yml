@@ -1,0 +1,13 @@
+name: llm_repl_7e6
+version: 0.1.0
+
+authors:
+  - ieve <ievemail@proton.me>
+
+targets:
+  llm_repl_7e6:
+    main: src/llm_repl_7e6.cr
+
+crystal: '>= 1.15.1'
+
+license: MIT
