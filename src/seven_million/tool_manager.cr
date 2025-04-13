@@ -31,22 +31,21 @@ module SevenMillion
       return nil unless tool_calls_array
 
       extracted_tool_calls = [] of ToolCall
-
+      
       tool_calls_array.each do |tool|
-        function_name_any = tool.dig("function", "name")
-        function_name = function_name_any.as_s?
+        function_name_any = tool.dig?("function", "name")
 
-        unless function_name
-          raise ToolException.new("Tool call missing function name")
-        end
+       
+        raise ToolException.new("Tool call missing function name") if function_name_any.nil?
+        function_name = function_name_any.as_s?
+        raise ToolException.new("Tool call missing function name") if function_name.nil?
+        # Compiler is being bratty... raising before and after is intentional. For some reason...
 
         puts "Processing function: #{function_name}"
 
-        
-
         parameters_hash = Hash(String,String).new
 
-        args_any = tool.dig("function", "arguments")
+        args_any = tool.dig?("function", "arguments")
         if args_any && args_any.as_h?
           if args_hash = args_any.as_h?
             args_hash.each do |key, value|
@@ -69,6 +68,6 @@ module SevenMillion
       @tool_calls.concat(extracted_tool_calls)
       return extracted_tool_calls.empty? ? nil : extracted_tool_calls
     end # def handle_tool_calls?
-    
+
   end   # class ToolManager
 end     # module SevenMillion
