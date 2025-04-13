@@ -1,17 +1,4 @@
-
-
 require "./seven_million/*"
-
-# Type alias for a hash representing tool data.
-# Keys are strings, and values can be any JSON value.
-alias ToolData = Hash(String, JSON::Any)
-# Type alias for an array of ToolData, representing a list of tools.
-alias ToolListType = Array(ToolData)
-
-# Exception raised when an error occurs during tool invocation or processing.
-class ToolException < Exception
-end
-
 
 # `•.,¸,.•*´¨`*•.¸,.•*´¨`*•.¸,.•*´¨`*•. `•.,¸,.•*´¨`*•.¸,.•*´¨`*•.¸,.•*´¨`*•.
 
@@ -56,15 +43,17 @@ top_p = 0.7
 max_tokens = 700
 
 # --- REPL Implementation ---
-puts "\n#{" Starting Crystal Ollama REPL ".colorize(:black).on(:cyan).mode(:bold)}"
+puts "\n#{" Starting LLM REPL ✨👾S E V E N M I L L I O N👾✨".colorize(:black).on(:cyan).mode(:bold)}"
 puts "#{"Using model: ".colorize(:white)} #{model_name.colorize(:yellow)}"
 puts "#{"API URL: ".colorize(:white)} #{api_url.colorize(:cyan)}"
 puts "Type your prompt and press Enter."
 puts "#{"Commands: ".colorize(:white)} #{"'clear'".colorize(:magenta)} #{"(reset context),".colorize(:white)} #{"'exit'".colorize(:magenta)} #{"or".colorize(:white)} #{"'quit'".colorize(:magenta)} #{"(end session)".colorize(:white)}"
 puts "🌸" * 40 # divider
 
-# Initialize messages
+# Initialize stuff
+tool_mgr = SevenMillion::ToolManager.new
 message_mgr = SevenMillion::ContextManager.new
+client = SevenMillion::OllamaClient.new(tool_mgr)
 
 tool_json_string = <<-JSON
 {
@@ -92,8 +81,8 @@ tool_json_string = <<-JSON
 JSON
 
 weather_tool_def = JSON.parse(tool_json_string).as_h
-
-tool_list : ToolListType = [weather_tool_def]
+alias ToolData = SevenMillion::ToolData
+tool_list : Array(ToolData) = [weather_tool_def]
 
 # 🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸
 
@@ -120,7 +109,7 @@ loop do
 
   print "#{" ".colorize(:magenta).mode(:italic)}Thinking.."
 
-  response = SevenMillion.send_text(
+  response = client.send_text(
     messages: message_mgr.get_messages,
     model: model_name,
     temperature: temperature,
