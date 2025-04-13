@@ -1,31 +1,4 @@
-# 🌌👽🚀~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~🚀👽🌌
-#   * *
-#      ✨          LLM REPL                  👾
-#   * *
-#      👾   S E V E N M I L L I O N          ✨
-#   * *
-# 🌌👽🚀~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~🚀👽🌌
 
-# The LLM REPL SEVEN MILLION (`SevenMillion`) application is a terminal-based chat loop / REPL for interacting with an ollama server.
-# It sends text to the model, prints the response, maintains a context until manually cleared or end of session, and handles tool calls in model response.
-# (In case I get distracted, we've only implemented tool calling on the ollama side, up to the point that we have extracted the function name and args out of squishy-space and JSON::Any jail and could reassemble that into a function call in deterministic-space.)
-
-#
-# Usage:
-#   Run the script using `crystal llm_repl_7e6.cr`.
-#
-# Commands:
-#   - Type your prompt and press Enter to send it to the Ollama model.
-#   - `clear`: Clears the conversation history (context).
-#   - `exit` or `quit`: Ends the REPL session.
-#
-# Configuration:
-#   - `model_name`: Specifies the Ollama model to use (default: "qwq:latest").
-#   - `api_url`: Sets the URL of the Ollama API (default: "http://localhost:11434/api/chat").
-#   - `temperature`, `top_p`, `max_tokens`: Control the generation parameters of the model.
-
-# 🌟💫 ~~~~~~~~~~~~~~~~CODE STARTS NOW...~~~~~~~~~~~~~~~ 💫🌟
-# 🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸🌼🌸
 
 require "./seven_million/*"
 
@@ -91,7 +64,7 @@ puts "#{"Commands: ".colorize(:white)} #{"'clear'".colorize(:magenta)} #{"(reset
 puts "🌸" * 40 # divider
 
 # Initialize messages
-messages = [] of Hash(String, String)
+message_mgr = SevenMillion::ContextManager.new
 
 tool_json_string = <<-JSON
 {
@@ -135,7 +108,7 @@ loop do
   when "exit", "quit"
     break
   when "clear"
-    messages.clear
+    message_mgr.clear
     puts " Context cleared. ".colorize(:yellow).mode(:italic)
     puts "─" * 40 # Divider
     next
@@ -143,13 +116,12 @@ loop do
     next
   end
 
-  msg = {"role" => "user", "content" => prompt}
-  messages << msg
+  message_mgr.add_user_message(prompt)
 
   print "#{" ".colorize(:magenta).mode(:italic)}Thinking.."
 
   response = SevenMillion.send_text(
-    messages: messages,
+    messages: message_mgr.get_messages,
     model: model_name,
     temperature: temperature,
     top_p: top_p,
@@ -162,8 +134,7 @@ loop do
   if response
     puts "\n#{"🤖 #{model_name}:".colorize(:blue).mode(:bold)}"
     puts response
-    botmsg = {"role" => "assistant", "content" => response}
-    messages << botmsg
+    message_mgr.add_assistant_message(response)
   else
     puts "\n#{"Error: Failed to get response from Ollama.".colorize(:red)}"
   end
