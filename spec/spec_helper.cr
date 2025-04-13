@@ -1,2 +1,2 @@
 require "spec"
-require "../src/llm_repl_7e6"
+require "../src/seven_million/*"

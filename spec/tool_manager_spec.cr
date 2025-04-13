@@ -34,15 +34,12 @@ describe SevenMillion::ToolManager do
     extracted_calls = tool_manager.extract_tool_calls?(response_data)
 
     # Assertions
-    extracted_calls.should_not be_nil # Runtime check still good practice
+    extracted_calls.should_not be_nil
 
-    # --- Correction Start Here ---
 
-    # Use an `if` check to satisfy the compiler's flow analysis
     if extracted_calls.nil?
       fail "Assertion failed: extracted_calls should not be nil" # Fail test if nil
     else
-      # Inside this `else` block, the compiler *knows* extracted_calls is not nil
       extracted_calls.size.should eq(1)
 
       expected_call = {
@@ -50,7 +47,6 @@ describe SevenMillion::ToolManager do
         "parameters"    => {"format" => "celsius", "location" => "Paris, FR"},
       }
 
-      # No '!' needed here now because of the surrounding `if` check
       extracted_calls[0].should eq(expected_call)
 
       # Check internal state
@@ -58,10 +54,7 @@ describe SevenMillion::ToolManager do
       tool_manager.tool_calls[0].should eq(expected_call)
     end
 
-    # --- Corrections End Here ---
   end
-
-  # --- Apply similarly to other tests expecting non-nil ---
 
   it "extracts multiple valid tool calls" do
      tool_manager = SevenMillion::ToolManager.new
