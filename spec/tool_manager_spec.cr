@@ -6,10 +6,10 @@ alias ToolCall = SevenMillion::ToolCall
 
 describe SevenMillion::ToolManager do
   describe "#extract_tool_calls?" do
-  it "extracts a single valid tool call" do
-    # Setup inside the test case
-    tool_manager = SevenMillion::ToolManager.new
-    json_string = <<-JSON
+    it "extracts a single valid tool call" do
+      # Setup inside the test case
+      tool_manager = SevenMillion::ToolManager.new
+      json_string = <<-JSON
     {
       "model": "llama3.2",
       "message": {
@@ -28,37 +28,35 @@ describe SevenMillion::ToolManager do
       }
     }
     JSON
-    response_data = JSON.parse(json_string)
+      response_data = JSON.parse(json_string)
 
-    # Action
-    extracted_calls = tool_manager.extract_tool_calls?(response_data)
+      # Action
+      extracted_calls = tool_manager.extract_tool_calls?(response_data)
 
-    # Assertions
-    extracted_calls.should_not be_nil
+      # Assertions
+      extracted_calls.should_not be_nil
 
+      if extracted_calls.nil?
+        fail "Assertion failed: extracted_calls should not be nil" # Fail test if nil
+      else
+        extracted_calls.size.should eq(1)
 
-    if extracted_calls.nil?
-      fail "Assertion failed: extracted_calls should not be nil" # Fail test if nil
-    else
-      extracted_calls.size.should eq(1)
+        expected_call = {
+          "function_name" => "get_current_weather",
+          "parameters"    => {"format" => "celsius", "location" => "Paris, FR"},
+        }
 
-      expected_call = {
-        "function_name" => "get_current_weather",
-        "parameters"    => {"format" => "celsius", "location" => "Paris, FR"},
-      }
+        extracted_calls[0].should eq(expected_call)
 
-      extracted_calls[0].should eq(expected_call)
-
-      # Check internal state
-      tool_manager.tool_calls.size.should eq(1)
-      tool_manager.tool_calls[0].should eq(expected_call)
+        # Check internal state
+        tool_manager.tool_calls.size.should eq(1)
+        tool_manager.tool_calls[0].should eq(expected_call)
+      end
     end
 
-  end
-
-  it "extracts multiple valid tool calls" do
-     tool_manager = SevenMillion::ToolManager.new
-     json_string = <<-JSON
+    it "extracts multiple valid tool calls" do
+      tool_manager = SevenMillion::ToolManager.new
+      json_string = <<-JSON
      {
        "message": {
          "role": "assistant",
@@ -73,32 +71,32 @@ describe SevenMillion::ToolManager do
        }
      }
      JSON
-     response_data = JSON.parse(json_string)
-     extracted_calls = tool_manager.extract_tool_calls?(response_data)
+      response_data = JSON.parse(json_string)
+      extracted_calls = tool_manager.extract_tool_calls?(response_data)
 
-     extracted_calls.should_not be_nil
-     extracted_calls.should be_a(Array(ToolCall)) # Keep this check
+      extracted_calls.should_not be_nil
+      extracted_calls.should be_a(Array(ToolCall)) # Keep this check
 
-     if extracted_calls.nil?
-       fail "Assertion failed: extracted_calls should not be nil"
-     else
-       extracted_calls.size.should eq(2) # No '!' needed
+      if extracted_calls.nil?
+        fail "Assertion failed: extracted_calls should not be nil"
+      else
+        extracted_calls.size.should eq(2) # No '!' needed
 
-       expected_call_1 = { "function_name" => "get_weather", "parameters" => {"location" => "London, UK"} }
-       expected_call_2 = { "function_name" => "search_web", "parameters" => {"query" => "Crystal Lang"} }
+        expected_call_1 = {"function_name" => "get_weather", "parameters" => {"location" => "London, UK"}}
+        expected_call_2 = {"function_name" => "search_web", "parameters" => {"query" => "Crystal Lang"}}
 
-       extracted_calls[0].should eq(expected_call_1) # No '!' needed
-       extracted_calls[1].should eq(expected_call_2) # No '!' needed
+        extracted_calls[0].should eq(expected_call_1) # No '!' needed
+        extracted_calls[1].should eq(expected_call_2) # No '!' needed
 
-       tool_manager.tool_calls.size.should eq(2)
-       tool_manager.tool_calls.should eq([expected_call_1, expected_call_2])
-     end
-  end
+        tool_manager.tool_calls.size.should eq(2)
+        tool_manager.tool_calls.should eq([expected_call_1, expected_call_2])
+      end
+    end
 
-  it "extracts multiple valid tool calls" do
-    # Setup
-    tool_manager = SevenMillion::ToolManager.new
-    json_string = <<-JSON
+    it "extracts multiple valid tool calls" do
+      # Setup
+      tool_manager = SevenMillion::ToolManager.new
+      json_string = <<-JSON
     {
       "message": {
         "role": "assistant",
@@ -119,50 +117,50 @@ describe SevenMillion::ToolManager do
       }
     }
     JSON
-    response_data = JSON.parse(json_string)
+      response_data = JSON.parse(json_string)
 
-    # Action
-    extracted_calls = tool_manager.extract_tool_calls?(response_data)
+      # Action
+      extracted_calls = tool_manager.extract_tool_calls?(response_data)
 
-    # Initial runtime assertions
-    extracted_calls.should_not be_nil
-    extracted_calls.should be_a(Array(ToolCall))
+      # Initial runtime assertions
+      extracted_calls.should_not be_nil
+      extracted_calls.should be_a(Array(ToolCall))
 
-    # Flow analysis check to satisfy the compiler
-    if extracted_calls.nil?
-      # This branch shouldn't be hit if the above assertions pass,
-      # but it satisfies the compiler's need to handle the Nil case.
-      fail "Assertion failed: extracted_calls should not be nil for multiple calls test"
-    else
-      # --- Assertions moved inside the 'else' block ---
-      # Compiler knows extracted_calls is Array(ToolCall) here.
+      # Flow analysis check to satisfy the compiler
+      if extracted_calls.nil?
+        # This branch shouldn't be hit if the above assertions pass,
+        # but it satisfies the compiler's need to handle the Nil case.
+        fail "Assertion failed: extracted_calls should not be nil for multiple calls test"
+      else
+        # --- Assertions moved inside the 'else' block ---
+        # Compiler knows extracted_calls is Array(ToolCall) here.
 
-      # This line caused the error - now safe inside the 'else' block
-      extracted_calls.size.should eq(2)
+        # This line caused the error - now safe inside the 'else' block
+        extracted_calls.size.should eq(2)
 
-      expected_call_1 = {
-        "function_name" => "get_weather",
-        "parameters"    => {"location" => "London, UK"},
-      }
-      expected_call_2 = {
-        "function_name" => "search_web",
-        "parameters"    => {"query" => "Crystal Lang"},
-      }
+        expected_call_1 = {
+          "function_name" => "get_weather",
+          "parameters"    => {"location" => "London, UK"},
+        }
+        expected_call_2 = {
+          "function_name" => "search_web",
+          "parameters"    => {"query" => "Crystal Lang"},
+        }
 
-      # Indexing is also safe here without '!'
-      extracted_calls[0].should eq(expected_call_1)
-      extracted_calls[1].should eq(expected_call_2)
+        # Indexing is also safe here without '!'
+        extracted_calls[0].should eq(expected_call_1)
+        extracted_calls[1].should eq(expected_call_2)
 
-      # Check internal state
-      tool_manager.tool_calls.size.should eq(2)
-      tool_manager.tool_calls.should eq([expected_call_1, expected_call_2])
+        # Check internal state
+        tool_manager.tool_calls.size.should eq(2)
+        tool_manager.tool_calls.should eq([expected_call_1, expected_call_2])
+      end
     end
-  end
 
-  it "handles tool calls with empty arguments" do
-    # Setup
-    tool_manager = SevenMillion::ToolManager.new
-    json_string = <<-JSON
+    it "handles tool calls with empty arguments" do
+      # Setup
+      tool_manager = SevenMillion::ToolManager.new
+      json_string = <<-JSON
     {
       "message": {
         "tool_calls": [
@@ -176,37 +174,37 @@ describe SevenMillion::ToolManager do
       }
     }
     JSON
-    response_data = JSON.parse(json_string)
+      response_data = JSON.parse(json_string)
 
-    # Action
-    extracted_calls = tool_manager.extract_tool_calls?(response_data)
+      # Action
+      extracted_calls = tool_manager.extract_tool_calls?(response_data)
 
-    # Initial runtime assertions
-    extracted_calls.should_not be_nil
-    extracted_calls.should be_a(Array(ToolCall))
+      # Initial runtime assertions
+      extracted_calls.should_not be_nil
+      extracted_calls.should be_a(Array(ToolCall))
 
-    # Flow analysis check
-    if extracted_calls.nil?
-      fail "Assertion failed: extracted_calls should not be nil for empty args test"
-    else
-      # Compiler knows extracted_calls is Array(ToolCall) here.
+      # Flow analysis check
+      if extracted_calls.nil?
+        fail "Assertion failed: extracted_calls should not be nil for empty args test"
+      else
+        # Compiler knows extracted_calls is Array(ToolCall) here.
 
-      # Check size (safe within 'else')
-      extracted_calls.size.should eq(1)
+        # Check size (safe within 'else')
+        extracted_calls.size.should eq(1)
 
-      expected_call = {
-        "function_name" => "get_time",
-        "parameters"    => {} of String => String, # Explicitly empty hash
-      }
+        expected_call = {
+          "function_name" => "get_time",
+          "parameters"    => {} of String => String, # Explicitly empty hash
+        }
 
-      # Check element content (safe within 'else')
-      extracted_calls[0].should eq(expected_call)
+        # Check element content (safe within 'else')
+        extracted_calls[0].should eq(expected_call)
 
-      # Check internal state (also safe as it depends on successful extraction)
-      tool_manager.tool_calls.size.should eq(1) # Check size first
-      tool_manager.tool_calls[0].should eq(expected_call)
+        # Check internal state (also safe as it depends on successful extraction)
+        tool_manager.tool_calls.size.should eq(1) # Check size first
+        tool_manager.tool_calls[0].should eq(expected_call)
+      end
     end
-  end
 
     it "returns nil if 'tool_calls' key is missing" do
       tool_manager = SevenMillion::ToolManager.new
@@ -245,7 +243,7 @@ describe SevenMillion::ToolManager do
       tool_manager.tool_calls.should be_empty
     end
 
-     it "returns nil if 'tool_calls' is null" do
+    it "returns nil if 'tool_calls' is null" do
       tool_manager = SevenMillion::ToolManager.new
       json_string = <<-JSON
       {
@@ -356,7 +354,7 @@ describe SevenMillion::ToolManager do
     end
 
     it "raises ToolException if 'tool_calls' is not an array" do
-       tool_manager = SevenMillion::ToolManager.new
+      tool_manager = SevenMillion::ToolManager.new
       json_string = <<-JSON
       {
         "message": {
@@ -382,6 +380,5 @@ describe SevenMillion::ToolManager do
       #   return nil # No tool calls field found
       # end
     end
-
   end
 end
